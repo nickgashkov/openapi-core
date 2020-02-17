@@ -1,4 +1,4 @@
-from falcon import Request, Response
+from falcon import Request, Response, RequestOptions
 from falcon.routing import DefaultRouter
 from falcon.testing import create_environ
 import pytest
@@ -18,7 +18,7 @@ def environ_factory():
 @pytest.fixture
 def router():
     router = DefaultRouter()
-    router.add_route('/browse/<int:id>/', None)
+    router.add_route("/browse/{id:int}/", lambda x: x)
     return router
 
 
@@ -26,12 +26,14 @@ def router():
 def request_factory(environ_factory, router):
     server_name = 'localhost'
 
-    def create_request(method, path, subdomain=None, query_string=None):
+    def create_request(
+            method, path, subdomain=None, query_string=None,
+            content_type='application/json'):
         environ = environ_factory(method, path, server_name)
         options = None
         # return create_req(options=options, **environ)
         req = Request(environ, options)
-        req.uri_template = router.find(path, req)
+        resource, method_map, params, req.uri_template = router.find(path, req)
         return req
     return create_request
 
